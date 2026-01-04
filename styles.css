@@ -96,4 +96,4 @@ body {
 .modal-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 2rem; }
 
 .hidden { display: none !important; }
-.icon-btn { background: none; border: none; color: var(--text); padding: 0.5rem; cursor: pointer; }
+.icon-btn { background: none; border: none; color: var(--text); padding: 0.5rem; cursor: pointer; } 
