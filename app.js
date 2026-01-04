@@ -118,4 +118,4 @@ document.getElementById('theme-toggle').onclick = () => {
 document.getElementById('notify-test').onclick = () => {
     Notification.requestPermission().then(p => { if(p === 'granted') notify("Bridge Test", "Watch Vibrate Active"); });
 };
-updateUI();
+updateUI(); 
