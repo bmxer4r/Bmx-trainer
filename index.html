@@ -3,95 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="description" content="Professional BMX Sprint Interval Timer">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#09090b">
-    
     <title>BMX Sprint Pro</title>
     
-    <!-- PWA Links -->
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="styles.css">
-    
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700&family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
 
-    <!-- Icons -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2309090b'/%3E%3Ccircle cx='50' cy='50' r='35' stroke='%23fbbf24' stroke-width='8' fill='none'/%3E%3Cpath d='M50 25 V50 L65 60' stroke='%23fff' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+    <style>
+        :root {
+            --bg: #09090b; --card: #18181b; --text: #ffffff; --muted: #a1a1aa; --border: #27272a;
+            --accent: #fbbf24; --sprint: #ef4444; --rest: #22c55e; --warmup: #fbbf24; --cooldown: #3b82f6;
+        }
+        [data-theme="light"] {
+            --bg: #f4f4f5; --card: #ffffff; --text: #09090b; --muted: #71717a; --border: #e4e4e7;
+        }
+        body {
+            background-color: var(--bg); color: var(--text); font-family: 'Manrope', sans-serif;
+            transition: all 0.3s ease; height: 100vh; overflow: hidden; touch-action: manipulation;
+        }
+        .timer-font { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
+        @media (orientation: landscape) {
+            .main-grid { grid-template-columns: 1fr 1fr; align-items: center; gap: 2rem; }
+            .header-area { grid-column: 1 / -1; }
+        }
+        .glass-card {
+            background: var(--card); border: 1px solid var(--border); border-radius: 2.5rem;
+            transition: all 0.3s ease; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+        }
+        .sprint-pulse { animation: pulse-border 1.5s infinite; border-color: var(--sprint) !important; }
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .progress-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--accent); width: 100%; transition: width 1s linear, background-color 0.4s ease; }
+        .btn { transition: transform 0.1s ease, opacity 0.2s ease; -webkit-tap-highlight-color: transparent; }
+        .btn:active { transform: scale(0.95); }
+    </style>
 </head>
-<body>
-
-    <div class="app-layout">
-        <!-- Top Bar -->
-        <header class="top-bar">
-            <div class="brand">
-                <div class="status-dot" id="status-dot"></div>
-                <h1>BMX SPRINT PRO</h1>
+<body class="p-6 pb-safe pt-safe">
+    <div class="h-full flex flex-col max-w-4xl mx-auto main-grid">
+        <header class="header-area flex justify-between items-center mb-6">
+            <div class="flex items-center gap-3">
+                <div id="status-dot" class="w-3 h-3 rounded-full bg-yellow-500 shadow-[0_0_10px_#fbbf24]"></div>
+                <h1 class="font-black text-xs tracking-widest opacity-50 uppercase">BMX Sprint Pro</h1>
             </div>
-            <button id="theme-toggle" class="icon-btn" aria-label="Toggle Theme">
-                <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-                <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-            </button>
+            <div class="flex gap-2">
+                <button id="notify-test" class="btn p-2 rounded-full hover:bg-white/5">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                </button>
+                <button id="theme-toggle" class="btn p-2 rounded-full hover:bg-white/5">
+                    <svg id="sun" class="hidden" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                </button>
+            </div>
         </header>
 
-        <!-- Main Timer Display -->
-        <main class="timer-card" id="timer-card">
-            <div class="phase-indicator" id="phase-label">WARMUP</div>
-            
-            <div class="time-display">
-                <span id="minutes">05</span><span class="colon">:</span><span id="seconds">00</span>
-            </div>
-
-            <div class="progress-track">
-                <div class="progress-fill" id="progress-bar"></div>
-            </div>
-
-            <div class="set-info">
-                <span class="label">INTERVAL</span>
-                <span class="value" id="set-counter">0/10</span>
+        <main id="main-card" class="glass-card flex-1 flex flex-col items-center justify-center p-8 mb-6">
+            <span id="phase-label" class="text-xs font-black tracking-[0.4em] mb-4 opacity-70 uppercase" style="color: var(--accent)">Warmup</span>
+            <div id="timer-display" class="timer-font text-[5.5rem] leading-none font-bold mb-8">05:00</div>
+            <div class="w-full max-w-xs space-y-6">
+                <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
+                <div class="flex justify-between items-center">
+                    <div><span class="block text-[10px] font-black opacity-40 uppercase tracking-widest">Interval</span><span id="interval-count" class="text-xl font-bold">0/10</span></div>
+                    <div class="text-right"><span class="block text-[10px] font-black opacity-40 uppercase tracking-widest">Next Up</span><span id="next-label" class="text-xs font-bold">10s Sprint</span></div>
+                </div>
             </div>
         </main>
 
-        <!-- Dynamic Info Area -->
-        <section class="info-area">
-            <div class="next-up-box">
-                <span class="label">UP NEXT</span>
-                <span class="value" id="next-up-text">10x Sprints (10s/50s)</span>
+        <footer class="flex flex-col gap-4">
+            <button id="start-btn" class="btn w-full py-6 bg-white text-black font-black text-lg rounded-[2rem] uppercase tracking-widest">Start Session</button>
+            <div id="active-controls" class="hidden grid grid-cols-2 gap-4">
+                <button id="pause-btn" class="btn py-6 bg-zinc-800 text-white font-bold rounded-[2rem] uppercase border border-white/5">Pause</button>
+                <button id="reset-btn" class="btn py-6 bg-zinc-900/50 text-red-500 font-bold rounded-[2rem] uppercase border border-red-500/20">Reset</button>
             </div>
-            
-            <div class="controls">
-                <button id="main-btn" class="btn btn-primary">START SESSION</button>
-                <div id="secondary-controls" class="btn-group hidden">
-                    <button id="pause-btn" class="btn btn-secondary">PAUSE</button>
-                    <button id="reset-btn" class="btn btn-danger">RESET</button>
-                </div>
-            </div>
-        </section>
+        </footer>
     </div>
 
-    <!-- Modals -->
-    <div id="modal-overlay" class="modal-overlay hidden">
-        <div class="modal">
-            <h2>End Session?</h2>
-            <p>Progress will be lost.</p>
-            <div class="modal-actions">
-                <button id="cancel-reset" class="btn btn-text">Cancel</button>
-                <button id="confirm-reset" class="btn btn-danger">End Session</button>
+    <div id="reset-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-6">
+        <div class="glass-card w-full max-w-xs p-8 text-center">
+            <h2 class="text-xl font-bold mb-8">Reset Session?</h2>
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="document.getElementById('reset-modal').classList.add('hidden')" class="p-4 rounded-2xl bg-zinc-800 font-bold text-xs uppercase text-white">Cancel</button>
+                <button id="confirm-reset" class="p-4 rounded-2xl bg-red-600 text-white font-bold text-xs uppercase">Reset</button>
             </div>
         </div>
     </div>
 
     <script src="app.js"></script>
     <script>
-        // Simple Service Worker Register
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js')
-                .then(() => console.log('SW Registered'))
-                .catch(err => console.log('SW Failed', err));
+            navigator.serviceWorker.register('sw.js').then(() => console.log("PWA Active"));
         }
     </script>
 </body>
 </html>
-
 
