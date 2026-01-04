@@ -1,122 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <!-- PWA / Mobile App Meta -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="BMX Sprint">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#000000">
 
-<!-- PWA / Mobile App Meta -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="BMX Sprint">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#000000">
+    <!-- Linking to the Manifest for GitHub Pages Installation -->
+    <link rel="manifest" href="manifest.json">
 
-<!-- Manifest -->
-<link rel="manifest" href="manifest.json">
-
-<title>BMX Sprint Trainer</title>
-<script src="https://cdn.tailwindcss.com"></script>
-
-<style>
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700&family=Inter:wght@400;700;900&display=swap');
-:root{--bg-color:#000000;--accent-amber:#fbbf24;--accent-red:#ff3b30;--accent-green:#34c759;--accent-blue:#007aff;}
-body{font-family:'Inter',sans-serif;background-color:var(--bg-color);color:#fff;height:100vh;margin:0;display:flex;touch-action:manipulation;overflow:hidden;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);}
-.timer-display{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;letter-spacing:-0.05em;}
-.app-grid{display:grid;grid-template-rows:auto 1fr auto;width:100%;height:100%;max-width:500px;margin:0 auto;padding:1rem;}
-@media (orientation: landscape){.app-grid{grid-template-rows:1fr;grid-template-columns:1fr 1fr;max-width:none;gap:2rem;padding:2rem;}.header-info{grid-column:1/3;position:absolute;top:1rem;left:2rem;right:2rem;}.controls-area{justify-content:center;}}
-.glass-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:2.5rem;display:flex;flex-direction:column;justify-content:center;align-items:center;position:relative;transition:all 0.5s ease;}
-#progress-bar{transition:width 1s linear,background-color 0.4s ease;}
-.sprint-mode #progress-bar{transition:width 0.1s linear;}
-.btn-press:active{transform:scale(0.96);opacity:0.8;}
-*{user-select:none;-webkit-tap-highlight-color:transparent;}
-.pulse-red{animation:red-glow 1s infinite alternate;}
-@keyframes red-glow{from{box-shadow:0 0 10px rgba(255,59,48,0);}to{box-shadow:0 0 40px rgba(255,59,48,0.4);}}
-</style>
+    <!-- App Icon (SVG Data URI) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%23000000'/%3E%3Cpath d='M90 35c-30.3 0-55 24.7-55 55s24.7 55 55 55 55-24.7 55-55-24.7-55-55-55zm0 10c24.9 0 45 20.1 45 45s-20.1 45-45 45-45-20.1-45-45 20.1-45 45-45z' fill='%23fbbf24'/%3E%3Ccircle cx='90' cy='90' r='12' fill='%23ef4444'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%23000000'/%3E%3Cpath d='M90 35c-30.3 0-55 24.7-55 55s24.7 55 55 55 55-24.7 55-55-24.7-55-55-55zm0 10c24.9 0 45 20.1 45 45s-20.1 45-45 45-45-20.1-45-45 20.1-45 45-45z' fill='%23fbbf24'/%3E%3Ccircle cx='90' cy='90' r='12' fill='%23ef4444'/%3E%3C/svg%3E">
+    
+    <title>BMX Sprint Trainer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700&family=Inter:wght@400;700;900&display=swap');
+        :root { --accent-amber: #fbbf24; --accent-red: #ff3b30; --accent-green: #34c759; --accent-blue: #007aff; }
+        body { font-family: 'Inter', sans-serif; background: #000; color: #fff; height: 100vh; display: flex; touch-action: manipulation; overflow: hidden; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+        .timer-display { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
+        .app-grid { display: grid; grid-template-rows: auto 1fr auto; width: 100%; height: 100%; max-width: 500px; margin: 0 auto; padding: 1rem; }
+        @media (orientation: landscape) {
+            .app-grid { grid-template-rows: 1fr; grid-template-columns: 1fr 1fr; max-width: none; gap: 2rem; padding: 2rem; }
+            .header-info { grid-column: 1/3; position: absolute; top: 1rem; left: 2rem; }
+        }
+        .glass-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(20px); border-radius: 2.5rem; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        #progress-bar { transition: width 1s linear, background-color 0.4s ease; }
+        .pulse-red { animation: red-glow 1s infinite alternate; }
+        @keyframes red-glow { from { box-shadow: 0 0 10px rgba(255,59,48,0); } to { box-shadow: 0 0 40px rgba(255,59,48,0.4); } }
+    </style>
 </head>
 <body>
-
-<div class="app-grid">
-    <div class="header-info flex justify-between items-end mb-4 px-2">
-        <div>
-            <h1 class="text-[10px] font-black tracking-widest uppercase text-zinc-500">BMX Sprint Pro</h1>
-            <p id="status-text" class="text-base font-bold">Ready to Ride</p>
+    <div class="app-grid">
+        <div class="header-info flex justify-between items-end mb-4 px-2">
+            <div><h1 class="text-[10px] font-black uppercase text-zinc-500">BMX Sprint Pro</h1><p id="status-text" class="text-base font-bold text-amber-500">Ready</p></div>
+            <div class="text-right"><span class="text-[10px] block font-black text-zinc-500 uppercase">Set</span><span id="set-display" class="text-xl font-black">0/10</span></div>
         </div>
-        <div class="text-right">
-            <span class="text-[10px] block font-black text-zinc-500 uppercase tracking-widest">Set</span>
-            <span id="set-display" class="text-xl font-black tabular-nums">0/10</span>
-        </div>
-    </div>
-
-    <div id="main-card" class="glass-card mb-4 lg:mb-0">
-        <div id="phase-label" class="text-xs font-black uppercase tracking-[0.4em] text-zinc-400 mb-2">Warmup</div>
-        <div id="timer-text" class="timer-display text-7xl sm:text-8xl md:text-9xl font-bold mb-6">05:00</div>
-        <div class="w-full max-w-[240px] px-6 space-y-4">
-            <div class="w-full bg-white/10 h-2 rounded-full overflow-hidden">
-                <div id="progress-bar" class="h-full bg-amber-400 w-full"></div>
+        <div id="main-card" class="glass-card mb-4 lg:mb-0">
+            <div id="phase-label" class="text-xs font-black uppercase tracking-[0.4em] text-zinc-400 mb-2">Warmup</div>
+            <div id="timer-text" class="timer-display text-7xl sm:text-9xl font-bold mb-6">05:00</div>
+            <div class="w-full max-w-[240px] px-6 space-y-4">
+                <div class="w-full bg-white/10 h-2 rounded-full overflow-hidden"><div id="progress-bar" class="h-full bg-amber-400 w-full"></div></div>
+                <p id="next-up" class="text-center text-[10px] font-bold text-zinc-500 uppercase">Next: 10x Sprints</p>
             </div>
-            <p id="next-up" class="text-center text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Next: 10x Sprints</p>
+        </div>
+        <div class="controls-area flex flex-col justify-end space-y-4 pb-4">
+            <button id="start-btn" class="w-full py-6 bg-white text-black font-black text-xl rounded-3xl uppercase tracking-widest">Start Session</button>
+            <div id="active-controls" class="hidden grid grid-cols-2 gap-4 w-full">
+                <button id="pause-btn" class="py-6 bg-zinc-800 text-white font-bold text-lg rounded-3xl uppercase tracking-widest border border-white/10">Pause</button>
+                <button id="reset-btn" class="py-6 bg-zinc-900 text-red-500 font-bold text-lg rounded-3xl uppercase tracking-widest border border-red-500/20">Reset</button>
+            </div>
         </div>
     </div>
 
-    <div class="controls-area flex flex-col justify-end space-y-4 pb-4 landscape:pb-0">
-        <button id="start-btn" class="w-full py-6 bg-white text-black font-black text-xl rounded-3xl btn-press uppercase tracking-widest shadow-lg">
-            Start Session
-        </button>
-        <div id="active-controls" class="hidden grid grid-cols-2 gap-4 w-full">
-            <button id="pause-btn" class="py-6 bg-zinc-800 text-white font-bold text-lg rounded-3xl btn-press uppercase tracking-widest border border-white/10">Pause</button>
-            <button id="reset-btn" class="py-6 bg-zinc-900 text-red-500 font-bold text-lg rounded-3xl btn-press uppercase tracking-widest border border-red-500/20">Reset</button>
+    <!-- Reset Confirmation -->
+    <div id="reset-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/90 backdrop-blur-md">
+        <div class="bg-zinc-900 border border-white/10 p-8 rounded-[2.5rem] w-full max-w-sm text-center">
+            <h2 class="text-xl font-black mb-2 uppercase text-white">Reset?</h2>
+            <div class="grid grid-cols-2 gap-4 mt-8">
+                <button id="cancel-reset" class="py-4 bg-zinc-800 rounded-2xl font-bold uppercase text-xs text-white">Cancel</button>
+                <button id="confirm-reset" class="py-4 bg-red-600 rounded-2xl font-bold uppercase text-xs text-white">Reset</button>
+            </div>
         </div>
     </div>
-</div>
 
-<div id="reset-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/90 backdrop-blur-md">
-    <div class="bg-zinc-900 border border-white/10 p-8 rounded-[2.5rem] w-full max-w-sm text-center">
-        <h2 class="text-xl font-black mb-2 uppercase">Reset Session?</h2>
-        <p class="text-zinc-400 text-sm mb-8">Confirming will clear all progress and reset to warmup.</p>
-        <div class="grid grid-cols-2 gap-4">
-            <button id="cancel-reset" class="py-4 bg-zinc-800 rounded-2xl font-bold uppercase text-xs">Cancel</button>
-            <button id="confirm-reset" class="py-4 bg-red-600 rounded-2xl font-bold uppercase text-xs">Reset</button>
-        </div>
-    </div>
-</div>
+    <script>
+        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
+        const WARMUP_TIME = 300, SPRINT_TIME = 10, REST_TIME = 50, COOLDOWN_TIME = 300, TOTAL_SETS = 10;
+        let state = 'IDLE', lastState = '', timeLeft = WARMUP_TIME, currentSet = 0, timerInterval = null, audioCtx = null;
+        const els = { timer: document.getElementById('timer-text'), phase: document.getElementById('phase-label'), progress: document.getElementById('progress-bar'), set: document.getElementById('set-display'), status: document.getElementById('status-text'), next: document.getElementById('next-up'), start: document.getElementById('start-btn'), controls: document.getElementById('active-controls'), card: document.getElementById('main-card'), modal: document.getElementById('reset-modal') };
 
-<script>
-const WARMUP_TIME=300;const SPRINT_TIME=10;const REST_TIME=50;const COOLDOWN_TIME=300;const TOTAL_SETS=10;
-let state='IDLE';let lastState='';let timeLeft=WARMUP_TIME;let currentSet=0;let timerInterval=null;let audioCtx=null;
-const timerText=document.getElementById('timer-text');const phaseLabel=document.getElementById('phase-label');
-const progressBar=document.getElementById('progress-bar');const setDisplay=document.getElementById('set-display');
-const statusText=document.getElementById('status-text');const nextUp=document.getElementById('next-up');
-const startBtn=document.getElementById('start-btn');const pauseBtn=document.getElementById('pause-btn');
-const resetBtn=document.getElementById('reset-btn');const activeControls=document.getElementById('active-controls');
-const mainCard=document.getElementById('main-card');const resetModal=document.getElementById('reset-modal');
+        function playBeep(f, d) { if (!audioCtx) return; const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.frequency.setValueAtTime(f, audioCtx.currentTime); g.gain.setValueAtTime(0.1, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime+d); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+d); }
+        function format(s) { return `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`; }
+        function updateUI() {
+            els.timer.textContent = format(timeLeft);
+            let total = 1;
+            let eff = state === 'PAUSED' ? lastState : state;
+            if (eff === 'WARMUP' || eff === 'IDLE') { total = WARMUP_TIME; els.phase.textContent = 'Warmup'; els.phase.style.color = 'var(--accent-amber)'; }
+            else if (eff === 'SPRINT') { total = SPRINT_TIME; els.phase.textContent = 'SPRINT!'; els.phase.style.color = 'var(--accent-red)'; els.card.classList.add('pulse-red'); }
+            else if (eff === 'REST') { total = REST_TIME; els.phase.textContent = 'Rest'; els.phase.style.color = 'var(--accent-green)'; }
+            else if (eff === 'COOLDOWN') { total = COOLDOWN_TIME; els.phase.textContent = 'Cooldown'; els.phase.style.color = 'var(--accent-blue)'; }
+            if (state === 'PAUSED') els.phase.textContent = 'PAUSED';
+            els.set.textContent = eff === 'COOLDOWN' ? 'FINISH' : `${currentSet}/${TOTAL_SETS}`;
+            els.progress.style.width = `${(timeLeft/total)*100}%`;
+            els.progress.style.backgroundColor = els.phase.style.color;
+        }
 
-function initAudio(){if(!audioCtx){audioCtx=new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();}}
-function playBeep(f,d){if(!audioCtx)return;const o=audioCtx.createOscillator();const g=audioCtx.createGain();o.type='sine';o.frequency.setValueAtTime(f,audioCtx.currentTime);g.gain.setValueAtTime(0.12,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+d);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+d);}
-function formatTime(s){const m=Math.floor(s/60);const sec=s%60;return `${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;}
-function updateUI(){timerText.textContent=formatTime(timeLeft);let total=1;mainCard.classList.remove('pulse-red');document.body.classList.remove('sprint-mode');if(state==='IDLE'||state==='WARMUP'||state==='PAUSED'){total=WARMUP_TIME;phaseLabel.textContent=(state==='PAUSED')?'Paused':'Warmup';phaseLabel.style.color='var(--accent-amber)';progressBar.style.backgroundColor='var(--accent-amber)';nextUp.textContent='Prepare for Sprints';}let effectiveState=(state==='PAUSED')?lastState:state;if(effectiveState==='SPRINT'){total=SPRINT_TIME;document.body.classList.add('sprint-mode');phaseLabel.textContent=(state==='PAUSED')?'Paused (Sprint)':'SPRINT!';phaseLabel.style.color='var(--accent-red)';progressBar.style.backgroundColor='var(--accent-red)';if(state!=='PAUSED')mainCard.classList.add('pulse-red');nextUp.textContent='FULL GAS';}else if(effectiveState==='REST'){total=REST_TIME;phaseLabel.textContent=(state==='PAUSED')?'Paused (Rest)':'Rest';phaseLabel.style.color='var(--accent-green)';progressBar.style.backgroundColor='var(--accent-green');nextUp.textContent=currentSet<TOTAL_SETS?`Next: Set ${currentSet+1}`:"Next: Cooldown";}else if(effectiveState==='COOLDOWN'){total=COOLDOWN_TIME;phaseLabel.textContent=(state==='PAUSED')?'Paused (Cooldown)':'Cooldown';phaseLabel.style.color='var(--accent-blue)';progressBar.style.backgroundColor='var(--accent-blue');nextUp.textContent='Recovering';}setDisplay.textContent=(effectiveState==='WARMUP')?`0/${TOTAL_SETS}`:(effectiveState==='COOLDOWN'?'Finish':`${currentSet}/${TOTAL_SETS}`);progressBar.style.width=`${(timeLeft/total)*100}%`;}
+        els.start.onclick = () => {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (state === 'IDLE') { state = 'WARMUP'; timeLeft = WARMUP_TIME; currentSet = 0; }
+            else if (state === 'PAUSED') state = lastState;
+            timerInterval = setInterval(() => {
+                if (timeLeft > 0) { if (timeLeft <= 3) playBeep(440, 0.1); timeLeft--; }
+                else {
+                    playBeep(880, 0.5);
+                    if (state === 'WARMUP') { state = 'SPRINT'; currentSet = 1; timeLeft = SPRINT_TIME; }
+                    else if (state === 'SPRINT') { state = 'REST'; timeLeft = REST_TIME; }
+                    else if (state === 'REST') { if (currentSet < TOTAL_SETS) { state = 'SPRINT'; currentSet++; timeLeft = SPRINT_TIME; } else { state = 'COOLDOWN'; timeLeft = COOLDOWN_TIME; } }
+                    else { clearInterval(timerInterval); state = 'IDLE'; els.start.textContent = 'Restart'; els.start.classList.remove('hidden'); els.controls.classList.add('hidden'); }
+                }
+                updateUI();
+            }, 1000);
+            els.start.classList.add('hidden'); els.controls.classList.remove('hidden'); updateUI();
+        };
 
-function tick(){if(timeLeft>0){if(timeLeft<=3)playBeep(440,0.1);timeLeft--;}else{playBeep(880,0.5);if(state==='WARMUP'){state='SPRINT';currentSet=1;timeLeft=SPRINT_TIME;statusText.textContent='Sprints Active';}else if(state==='SPRINT'){state='REST';timeLeft=REST_TIME;}else if(state==='REST'){if(currentSet<TOTAL_SETS){state='SPRINT';currentSet++;timeLeft=SPRINT_TIME;}else{state='COOLDOWN';timeLeft=COOLDOWN_TIME;statusText.textContent='Final Cooldown';}}else if(state==='COOLDOWN'){clearInterval(timerInterval);timerInterval=null;state='IDLE';timerText.textContent='DONE';startBtn.textContent='Repeat Session';startBtn.classList.remove('hidden');activeControls.classList.add('hidden');statusText.textContent='Session Complete';}}updateUI();}
-
-startBtn.onclick=()=>{initAudio();if(state==='IDLE'){state='WARMUP';timeLeft=WARMUP_TIME;currentSet=0;}else if(state==='PAUSED'){state=lastState;}timerInterval=setInterval(tick,1000);startBtn.classList.add('hidden');activeControls.classList.remove('hidden');statusText.textContent='Training Session';updateUI();};
-
-pauseBtn.onclick=()=>{if(timerInterval){clearInterval(timerInterval);timerInterval=null;lastState=state;state='PAUSED';startBtn.textContent='Continue Session';startBtn.classList.remove('hidden');activeControls.classList.add('hidden');statusText.textContent='Session Paused';updateUI();}};
-
-resetBtn.onclick=()=>{resetModal.classList.remove('hidden');};
-document.getElementById('cancel-reset').onclick=()=>{resetModal.classList.add('hidden');};
-document.getElementById('confirm-reset').onclick=()=>{clearInterval(timerInterval);timerInterval=null;state='IDLE';timeLeft=WARMUP_TIME;currentSet=0;startBtn.textContent='Start Session';startBtn.classList.remove('hidden');activeControls.classList.add('hidden');statusText.textContent='Ready to Ride';resetModal.classList.add('hidden');updateUI();};
-
-if('wakeLock' in navigator){let wakeLock=null;const lock=async()=>{try{wakeLock=await navigator.wakeLock.request('screen');}catch(e){}};startBtn.addEventListener('click',lock);}
-
-updateUI();
-
-// Service Worker registration for fullscreen PWA
-if('serviceWorker' in navigator){
-    window.addEventListener('load',()=>{
-        navigator.serviceWorker.register('sw.js')
-        .then(reg=>console.log('Service Worker registered:',reg.scope))
-        .catch(err=>console.warn('Service Worker registration failed:',err));
-    });
-}
-</script>
+        document.getElementById('pause-btn').onclick = () => { clearInterval(timerInterval); lastState = state; state = 'PAUSED'; els.start.textContent = 'Resume'; els.start.classList.remove('hidden'); els.controls.classList.add('hidden'); updateUI(); };
+        document.getElementById('reset-btn').onclick = () => { els.modal.classList.remove('hidden'); };
+        document.getElementById('cancel-reset').onclick = () => { els.modal.classList.add('hidden'); };
+        document.getElementById('confirm-reset').onclick = () => { clearInterval(timerInterval); state = 'IDLE'; timeLeft = WARMUP_TIME; currentSet = 0; els.start.textContent = 'Start Session'; els.start.classList.remove('hidden'); els.controls.classList.add('hidden'); els.modal.classList.add('hidden'); updateUI(); };
+        updateUI();
+    </script>
 </body>
 </html>
+
