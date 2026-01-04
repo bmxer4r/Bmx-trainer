@@ -1,262 +1,131 @@
-// Configuration
-const CONFIG = {
-    warmup: 300,
-    sprint: 10,
-    rest: 50,
-    cooldown: 300,
-    sets: 10
-};
+const TIMES = { warmup: 300, sprint: 10, rest: 50, cooldown: 300, totalSets: 10 };
+let state = { phase: 'IDLE', timeLeft: TIMES.warmup, currentSet: 0, isRunning: false, timer: null, audio: null };
 
-// State Management
-let state = {
-    phase: 'IDLE', // IDLE, WARMUP, SPRINT, REST, COOLDOWN
-    timeLeft: CONFIG.warmup,
-    currentSet: 0,
-    isRunning: false,
-    intervalId: null,
-    audioContext: null
+const el = {
+    theme: document.documentElement,
+    timer: document.getElementById('timer-display'),
+    phase: document.getElementById('phase-label'),
+    progress: document.getElementById('progress-fill'),
+    sets: document.getElementById('interval-count'),
+    next: document.getElementById('next-label'),
+    card: document.getElementById('main-card'),
+    startBtn: document.getElementById('start-btn'),
+    controls: document.getElementById('active-controls'),
+    status: document.getElementById('status-dot'),
+    modal: document.getElementById('reset-modal')
 };
-
-// DOM Elements
-const els = {
-    html: document.documentElement,
-    timerCard: document.getElementById('timer-card'),
-    phaseLabel: document.getElementById('phase-label'),
-    mins: document.getElementById('minutes'),
-    secs: document.getElementById('seconds'),
-    progress: document.getElementById('progress-bar'),
-    setCounter: document.getElementById('set-counter'),
-    nextUp: document.getElementById('next-up-text'),
-    mainBtn: document.getElementById('main-btn'),
-    secondaryControls: document.getElementById('secondary-controls'),
-    pauseBtn: document.getElementById('pause-btn'),
-    themeToggle: document.getElementById('theme-toggle'),
-    modal: document.getElementById('modal-overlay'),
-    statusDot: document.getElementById('status-dot')
-};
-
-// --- Audio & Notifications (The "Watch Integration" Part) ---
 
 function initAudio() {
-    if (!state.audioContext) {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        state.audioContext = new AudioContext();
+    if (!state.audio) state.audio = new (window.AudioContext || window.webkitAudioContext)();
+    if (state.audio.state === 'suspended') state.audio.resume();
+}
+
+function playBeep(freq, dur) {
+    if (!state.audio) return;
+    const osc = state.audio.createOscillator();
+    const gain = state.audio.createGain();
+    osc.frequency.setValueAtTime(freq, state.audio.currentTime);
+    gain.gain.setValueAtTime(0.1, state.audio.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, state.audio.currentTime + dur);
+    osc.connect(gain); gain.connect(state.audio.destination);
+    osc.start(); osc.stop(state.audio.currentTime + dur);
+}
+
+function notify(title, body) {
+    if (Notification.permission === 'granted' && document.hidden) {
+        new Notification(title, { body });
     }
-    if (state.audioContext.state === 'suspended') {
-        state.audioContext.resume();
-    }
-}
-
-function playBeep(freq, duration, type = 'sine') {
-    if (!state.audioContext) return;
-    const osc = state.audioContext.createOscillator();
-    const gain = state.audioContext.createGain();
-    
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, state.audioContext.currentTime);
-    
-    gain.gain.setValueAtTime(0.1, state.audioContext.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, state.audioContext.currentTime + duration);
-    
-    osc.connect(gain);
-    gain.connect(state.audioContext.destination);
-    osc.start();
-    osc.stop(state.audioContext.currentTime + duration);
-}
-
-// Request permissions for watch vibration support
-function requestNotificationPermission() {
-    if ('Notification' in window && Notification.permission !== 'granted') {
-        Notification.requestPermission();
-    }
-}
-
-function sendNotification(title, body) {
-    // 1. Phone Vibration
-    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-    
-    // 2. Watch Notification (Bridge via System Notifications)
-    if ('Notification' in window && Notification.permission === 'granted' && document.visibilityState === 'hidden') {
-        // Only fire if app is in background (phone in pocket) to avoid double buzz
-        new Notification(title, { 
-            body: body,
-            icon: 'icon.png', // Fallback
-            tag: 'bmx-timer' // Prevents stacking
-        });
-    }
-}
-
-// --- Logic ---
-
-function formatTime(totalSeconds) {
-    const m = Math.floor(totalSeconds / 60);
-    const s = totalSeconds % 60;
-    els.mins.textContent = m.toString().padStart(2, '0');
-    els.secs.textContent = s.toString().padStart(2, '0');
-}
-
-function updateThemeColor(colorVar) {
-    // Updates the CSS variable for the active color
-    const color = getComputedStyle(els.html).getPropertyValue(colorVar).trim();
-    els.html.style.setProperty('--active-color', color);
+    if (navigator.vibrate) navigator.vibrate([300, 100, 300]);
 }
 
 function updateUI() {
-    formatTime(state.timeLeft);
+    const m = Math.floor(state.timeLeft / 60);
+    const s = state.timeLeft % 60;
+    el.timer.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
     
-    // Set colors and text based on phase
-    switch(state.phase) {
-        case 'IDLE':
-        case 'WARMUP':
-            updateThemeColor('--c-amber');
-            els.phaseLabel.textContent = 'WARMUP';
-            els.setCounter.textContent = `0/${CONFIG.sets}`;
-            els.nextUp.textContent = "Upcoming: 10x Sprints";
-            els.html.classList.remove('sprint-active');
-            els.timerCard.classList.remove('sprint-pulse');
-            break;
-        case 'SPRINT':
-            updateThemeColor('--c-red');
-            els.phaseLabel.textContent = 'FULL GAS';
-            els.setCounter.textContent = `${state.currentSet}/${CONFIG.sets}`;
-            els.nextUp.textContent = "Push Hard!";
-            els.html.classList.add('sprint-active');
-            els.timerCard.classList.add('sprint-pulse');
-            break;
-        case 'REST':
-            updateThemeColor('--c-green');
-            els.phaseLabel.textContent = 'RECOVER';
-            els.setCounter.textContent = `${state.currentSet}/${CONFIG.sets}`;
-            els.nextUp.textContent = state.currentSet < CONFIG.sets ? `Next: Sprint ${state.currentSet + 1}` : "Next: Cooldown";
-            els.html.classList.remove('sprint-active');
-            els.timerCard.classList.remove('sprint-pulse');
-            break;
-        case 'COOLDOWN':
-            updateThemeColor('--c-blue');
-            els.phaseLabel.textContent = 'COOLDOWN';
-            els.setCounter.textContent = "FINISH";
-            els.nextUp.textContent = "Easy Spin";
-            els.html.classList.remove('sprint-active');
-            els.timerCard.classList.remove('sprint-pulse');
-            break;
-    }
-
-    // Progress Bar
-    let maxTime = CONFIG.warmup;
-    if (state.phase === 'SPRINT') maxTime = CONFIG.sprint;
-    if (state.phase === 'REST') maxTime = CONFIG.rest;
-    if (state.phase === 'COOLDOWN') maxTime = CONFIG.cooldown;
+    let accent = '#fbbf24', total = TIMES.warmup;
+    el.card.classList.remove('sprint-pulse');
     
-    const percentage = (state.timeLeft / maxTime) * 100;
-    els.progress.style.width = `${percentage}%`;
-}
-
-function tick() {
-    if (state.timeLeft > 0) {
-        // Countdown Beeps (3, 2, 1)
-        if (state.timeLeft <= 3) playBeep(440, 0.1);
-        state.timeLeft--;
-    } else {
-        // Phase Transition
-        handleTransition();
-    }
-    updateUI();
-}
-
-function handleTransition() {
-    playBeep(880, 0.6, 'square'); // Loud transition beep
-    
-    if (state.phase === 'WARMUP') {
-        state.phase = 'SPRINT';
-        state.currentSet = 1;
-        state.timeLeft = CONFIG.sprint;
-        sendNotification("SPRINT!", "Go Go Go!");
-    } else if (state.phase === 'SPRINT') {
-        state.phase = 'REST';
-        state.timeLeft = CONFIG.rest;
-        sendNotification("REST", "Recover now.");
+    if (state.phase === 'SPRINT') {
+        accent = '#ef4444'; total = TIMES.sprint; el.phase.textContent = 'SPRINT!'; el.next.textContent = 'Full Gas';
+        if (state.isRunning) el.card.classList.add('sprint-pulse');
     } else if (state.phase === 'REST') {
-        if (state.currentSet < CONFIG.sets) {
-            state.phase = 'SPRINT';
-            state.currentSet++;
-            state.timeLeft = CONFIG.sprint;
-            sendNotification(`SPRINT ${state.currentSet}`, "Full Power!");
-        } else {
-            state.phase = 'COOLDOWN';
-            state.timeLeft = CONFIG.cooldown;
-            sendNotification("COOLDOWN", "Good job. Spin it out.");
-        }
+        accent = '#22c55e'; total = TIMES.rest; el.phase.textContent = 'REST'; el.next.textContent = state.currentSet < TIMES.totalSets ? `Next: Set ${state.currentSet + 1}` : 'Cooldown';
     } else if (state.phase === 'COOLDOWN') {
-        completeSession();
+        accent = '#3b82f6'; total = TIMES.cooldown; el.phase.textContent = 'COOLDOWN'; el.next.textContent = 'Done';
+    } else {
+        el.phase.textContent = state.isRunning ? 'Warmup' : (state.phase === 'IDLE' ? 'Ready' : 'Paused');
+    }
+
+    el.phase.style.color = accent;
+    el.status.style.backgroundColor = accent;
+    el.status.style.boxShadow = `0 0 10px ${accent}`;
+    el.progress.style.backgroundColor = accent;
+    el.progress.style.width = `${(state.timeLeft / total) * 100}%`;
+    el.sets.textContent = `${state.currentSet}/${TIMES.totalSets}`;
+}
+
+function transition() {
+    playBeep(880, 0.6);
+    if (state.phase === 'WARMUP' || state.phase === 'IDLE') {
+        state.phase = 'SPRINT'; state.currentSet = 1; state.timeLeft = TIMES.sprint;
+        notify("SPRINT!", "Go!");
+    } else if (state.phase === 'SPRINT') {
+        state.phase = 'REST'; state.timeLeft = TIMES.rest;
+        notify("REST", "Recover");
+    } else if (state.phase === 'REST') {
+        if (state.currentSet < TIMES.totalSets) {
+            state.phase = 'SPRINT'; state.currentSet++; state.timeLeft = TIMES.sprint;
+            notify(`SPRINT ${state.currentSet}`, "Power!");
+        } else {
+            state.phase = 'COOLDOWN'; state.timeLeft = TIMES.cooldown;
+            notify("COOLDOWN", "Easy now");
+        }
+    } else {
+        reset(true);
     }
 }
 
-function startTimer() {
+function start() {
     initAudio();
-    requestNotificationPermission();
-    
-    // Wake Lock
-    if ('wakeLock' in navigator) {
-        navigator.wakeLock.request('screen').catch(console.error);
-    }
-
-    if (state.phase === 'IDLE') {
-        state.phase = 'WARMUP';
-        state.timeLeft = CONFIG.warmup;
-    }
-    
+    if (state.phase === 'IDLE') { state.phase = 'WARMUP'; state.timeLeft = TIMES.warmup; }
     state.isRunning = true;
-    state.intervalId = setInterval(tick, 1000);
-    
-    els.mainBtn.classList.add('hidden');
-    els.secondaryControls.classList.remove('hidden');
+    state.timer = setInterval(() => {
+        if (state.timeLeft > 0) {
+            if (state.timeLeft <= 3) playBeep(440, 0.1);
+            state.timeLeft--;
+        } else transition();
+        updateUI();
+    }, 1000);
+    el.startBtn.classList.add('hidden'); el.controls.classList.remove('hidden');
     updateUI();
 }
 
-function pauseTimer() {
-    clearInterval(state.intervalId);
-    state.isRunning = false;
-    els.mainBtn.textContent = "RESUME SESSION";
-    els.mainBtn.classList.remove('hidden');
-    els.secondaryControls.classList.add('hidden');
-    els.phaseLabel.textContent = "PAUSED";
-}
-
-function completeSession() {
-    clearInterval(state.intervalId);
-    state.phase = 'IDLE';
-    state.currentSet = 0;
-    state.timeLeft = CONFIG.warmup;
-    state.isRunning = false;
-    
-    els.mainBtn.textContent = "START NEW SESSION";
-    els.mainBtn.classList.remove('hidden');
-    els.secondaryControls.classList.add('hidden');
-    
-    sendNotification("DONE", "Session Complete.");
+function pause() {
+    clearInterval(state.timer); state.isRunning = false;
+    el.startBtn.textContent = 'Resume'; el.startBtn.classList.remove('hidden'); el.controls.classList.add('hidden');
     updateUI();
 }
 
-// --- Event Listeners ---
+function reset(done = false) {
+    clearInterval(state.timer); state.isRunning = false; state.phase = 'IDLE'; state.timeLeft = TIMES.warmup; state.currentSet = 0;
+    el.startBtn.textContent = done ? 'Restart Session' : 'Start Session';
+    el.startBtn.classList.remove('hidden'); el.controls.classList.add('hidden');
+    updateUI();
+}
 
-els.mainBtn.addEventListener('click', startTimer);
-els.pauseBtn.addEventListener('click', pauseTimer);
-
-els.themeToggle.addEventListener('click', () => {
-    const current = els.html.getAttribute('data-theme');
-    const next = current === 'dark' ? 'light' : 'dark';
-    els.html.setAttribute('data-theme', next);
-});
-
-// Reset Modal Logic
-document.getElementById('reset-btn').addEventListener('click', () => els.modal.classList.remove('hidden'));
-document.getElementById('cancel-reset').addEventListener('click', () => els.modal.classList.add('hidden'));
-document.getElementById('confirm-reset').addEventListener('click', () => {
-    els.modal.classList.add('hidden');
-    completeSession();
-    els.mainBtn.textContent = "START SESSION"; // Reset text
-});
-
-// Init
+el.startBtn.onclick = start;
+document.getElementById('pause-btn').onclick = pause;
+document.getElementById('reset-btn').onclick = () => el.modal.classList.remove('hidden');
+document.getElementById('confirm-reset').onclick = () => { el.modal.classList.add('hidden'); reset(); };
+document.getElementById('theme-toggle').onclick = () => {
+    const isDark = el.theme.getAttribute('data-theme') === 'dark';
+    el.theme.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    document.getElementById('sun').classList.toggle('hidden', isDark);
+    document.getElementById('moon').classList.toggle('hidden', !isDark);
+};
+document.getElementById('notify-test').onclick = () => {
+    Notification.requestPermission().then(p => { if(p === 'granted') notify("Test", "Vibration Active"); });
+};
 updateUI();
 
